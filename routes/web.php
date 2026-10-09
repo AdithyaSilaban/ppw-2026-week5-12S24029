@@ -1,0 +1,11 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MahasiswaController;
+use App\Http\Controllers\BukuController;
+use App\Http\Controllers\KategoriController;
+
+Route::get('/', fn() => redirect()->route('mahasiswa.index'));
+Route::resource('mahasiswa', MahasiswaController::class);
+Route::resource('buku', BukuController::class);
+Route::resource('kategori', KategoriController::class);
