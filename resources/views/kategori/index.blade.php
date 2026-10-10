@@ -1,18 +1,4 @@
 <x-layout>
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark">Daftar Kategori Buku</h2>
@@ -22,7 +8,7 @@
             <a href="{{ route('buku.index') }}" class="btn btn-outline-secondary me-2 shadow-sm">
                 Ke Katalog Buku
             </a>
-            <a href="{{ route('kategori.create') }}" class="btn text-white shadow-sm" style="background-color: #4C1D95;">
+            <a href="{{ route('kategori.create') }}" class="btn btn-del shadow-sm">
                 + Tambah Kategori
             </a>
         </div>
@@ -34,10 +20,10 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-3" style="width: 25%;">Kode Kategori</th>
+                            <th class="ps-3" style="width: 20%;">Kode Kategori</th>
                             <th>Nama Kategori</th>
                             <th class="text-center" style="width: 20%;">Total Koleksi</th>
-                            <th class="text-end pe-3" style="width: 20%;">Aksi</th>
+                            <th class="text-end pe-3" style="width: 25%;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -46,17 +32,26 @@
                                 <td class="ps-3 font-monospace fw-semibold text-secondary">
                                     {{ $kat->kode_kategori }}
                                 </td>
-                                <td class="fw-bold">{{ $kat->nama_kategori }}</td>
+                                <td>
+                                    <!-- Nama kategori dapat diklik langsung menuju detail -->
+                                    <a href="{{ route('kategori.show', $kat) }}" class="fw-bold text-decoration-none text-dark d-block">
+                                        {{ $kat->nama_kategori }}
+                                    </a>
+                                </td>
                                 <td class="text-center">
                                     <span class="badge rounded-pill bg-light text-dark border">
-                                        {{ $kat->bukus_count }} Judul
+                                        {{ $kat->bukus_count ?? 0 }} Judul
                                     </span>
                                 </td>
                                 <td class="text-end pe-3">
-                                    <a href="{{ route('kategori.edit', $kat->id) }}" class="btn btn-sm btn-outline-warning me-1">
+                                    <!-- Tombol Detail untuk akses eksplisit ke kategori.show -->
+                                    <a href="{{ route('kategori.show', $kat) }}" class="btn btn-sm btn-outline-info me-1" title="Lihat Detail Koleksi">
+                                        Detail
+                                    </a>
+                                    <a href="{{ route('kategori.edit', $kat) }}" class="btn btn-sm btn-outline-warning me-1">
                                         Edit
                                     </a>
-                                    <form action="{{ route('kategori.destroy', $kat->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori ini?');">
+                                    <form action="{{ route('kategori.destroy', $kat) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori ini?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger">

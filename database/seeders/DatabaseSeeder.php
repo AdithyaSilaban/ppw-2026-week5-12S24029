@@ -26,8 +26,11 @@ class DatabaseSeeder extends Seeder
         $kat4 = Kategori::firstOrCreate(['kode_kategori' => 'KAT-04'], ['nama_kategori' => 'Bisnis & Manajemen']);
         $kat5 = Kategori::firstOrCreate(['kode_kategori' => 'KAT-05'], ['nama_kategori' => 'Sosial & Humaniora']);
 
-        // Buat 20 data buku dummy otomatis menggunakan BukuFactory
-        Buku::factory(20)->create();
+        // Kumpulkan 5 kategori utama ke dalam collection
+        $kategoris = collect([$kat1, $kat2, $kat3, $kat4, $kat5]);
+
+        // Buat 20 buku dummy yang kategorinya diambil secara acak dari 5 kategori di atas
+        Buku::factory(20)->recycle($kategoris)->create();
 
         // Data Buku
         Buku::firstOrCreate(

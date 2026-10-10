@@ -44,7 +44,7 @@ class BukuController extends Controller
 
         Buku::create($validated);
 
-        return redirect()->route('buku.index')->with('success', 'Buku baru berhasil ditambahkan!');
+        return redirect()->route('buku.index')->with('success', 'Buku baru berhasil ditambahkan ke katalog!');
     }
 
     /**
@@ -94,6 +94,6 @@ class BukuController extends Controller
     {
         $buku->delete();
 
-        return redirect()->route('buku.index')->with('success', 'Data buku berhasil dihapus!');
+        return redirect()->route('buku.index')->with('success', 'Buku berhasil dihapus dari katalog!');
     }
 }
