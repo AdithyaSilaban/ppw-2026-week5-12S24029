@@ -33,7 +33,7 @@ class BukuController extends Controller
     {
         $validated = $request->validate([
             'isbn'         => 'required|string|max:20|unique:bukus,isbn',
-            'judul'        => 'required|string|max:200',
+            'judul'        => 'required|string|min:5|max:200',
             'penulis'      => 'required|string|max:150',
             'penerbit'     => 'required|string|max:150',
             'tahun_terbit' => 'required|integer|digits:4|min:1900|max:' . date('Y'),
@@ -52,10 +52,8 @@ class BukuController extends Controller
      */
     public function show(Buku $buku)
     {
-        return view('buku.edit', [
-        'buku' => $buku,
-        'kategoris' => Kategori::orderBy('nama_kategori')->get()
-    ]);
+       $buku->load('kategori');
+       return view('buku.show', compact('buku'));
     }
 
     /**
@@ -75,7 +73,7 @@ class BukuController extends Controller
         $validated = $request->validate([
             // Pengecualian ID unik agar ISBN buku yang sedang diedit tidak dianggap duplikat
             'isbn'         => 'required|string|max:20|unique:bukus,isbn,' . $buku->id,
-            'judul'        => 'required|string|max:200',
+            'judul'        => 'required|string|min:5|max:200',
             'penulis'      => 'required|string|max:150',
             'penerbit'     => 'required|string|max:150',
             'tahun_terbit' => 'required|integer|digits:4|min:1900|max:' . date('Y'),

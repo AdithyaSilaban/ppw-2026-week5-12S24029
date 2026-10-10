@@ -44,7 +44,8 @@ class KategoriController extends Controller
      */
     public function show(Kategori $kategori)
     {
-        //
+        $bukus = $kategori->bukus()->latest()->paginate(10);
+        return view('kategori.show', compact('kategori', 'bukus'));
     }
 
     /**

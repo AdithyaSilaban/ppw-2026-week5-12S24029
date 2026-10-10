@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>{{ $title ?? 'SIM-Del' }} Institut Teknologi Del</title>
+    <title>{{ $title ?? 'SIPUS-Del' }} Institut Teknologi Del</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .navbar-del { background-color: #4C1D95; }
@@ -13,7 +14,7 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark navbar-del shadow-sm mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ route('mahasiswa.index') }}">SIM-Del Mahasiswa</a>
+            <a class="navbar-brand fw-bold" href="{{ route('buku.index') }}">SIPUS-Del - Sistem Informasi Perpustakaan Del</a>
         </div>
     </nav>
     <div class="container pb-5">
