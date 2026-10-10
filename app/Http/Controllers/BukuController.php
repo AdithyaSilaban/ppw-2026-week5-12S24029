@@ -52,7 +52,10 @@ class BukuController extends Controller
      */
     public function show(Buku $buku)
     {
-        //
+        return view('buku.edit', [
+        'buku' => $buku,
+        'kategoris' => Kategori::orderBy('nama_kategori')->get()
+    ]);
     }
 
     /**
