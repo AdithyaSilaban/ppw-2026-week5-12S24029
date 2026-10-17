@@ -14,7 +14,7 @@
                             <select name="buku_id" id="buku_id" class="form-select @error('buku_id') is-invalid @enderror" required>
                                 <option value="" disabled selected>-- Pilih Koleksi Buku --</option>
                                 @foreach($bukus as $buku)
-                                    <option value="{{ $buku->id }}" {{ old('buku_id') == $buku->id ? 'selected' : '' }} {{ $buku->stok <= 0 ? 'disabled' : '' }}>
+                                    <option value="{{ $buku->id }}" {{ old('buku_id') == $buku->id ? 'selected' : '' }}>
                                         {{ $buku->judul }} (Stok Tersedia: {{ $buku->stok }}) {{ $buku->stok <= 0 ? '- [HABIS]' : '' }}
                                     </option>
                                 @endforeach
@@ -22,6 +22,9 @@
                             @error('buku_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div class="form-text text-muted">
+                                Catatan: Buku dengan status [HABIS] dapat dipilih untuk memverifikasi penolakan transaksi dan rollback basis data.
+                            </div>
                         </div>
 
                         <div class="row">
