@@ -43,5 +43,95 @@ class BukuController extends Controller
         return view('buku.index', compact('bukus', 'kategoris', 'stats'));
     }
 
-    // Method lainnya (create, store, show, edit, update, destroy) tetap sama
+    /**
+     * Formulir tambah buku baru (Hanya Pustakawan).
+     */
+    public function create()
+    {
+        $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get();
+        return view('buku.create', compact('kategoris'));
+    }
+
+    /**
+     * Simpan buku baru ke basis data.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'isbn'         => 'required|string|max:20|unique:bukus,isbn',
+            'judul'        => 'required|string|min:5|max:200',
+            'penulis'      => 'required|string|max:150',
+            'penerbit'     => 'required|string|max:150',
+            'tahun_terbit' => 'required|digits:4|integer|min:1900|max:' . (date('Y') + 1),
+            'kategori_id'  => 'required|exists:kategoris,id',
+            'stok'         => 'required|integer|min:0',
+            'sinopsis'     => 'nullable|string',
+        ]);
+
+        Buku::create($validated);
+
+        return redirect()->route('buku.index')
+            ->with('success', 'Buku baru berhasil ditambahkan ke katalog.');
+    }
+
+    /**
+     * Tampilkan detail buku beserta riwayat sirkulasinya.
+     */
+    public function show(Buku $buku)
+    {
+        $buku->load(['kategori', 'peminjamans' => function ($query) {
+            $query->latest();
+        }]);
+
+        return view('buku.show', compact('buku'));
+    }
+
+    /**
+     * Formulir edit data buku.
+     */
+    public function edit(Buku $buku)
+    {
+        $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get();
+        return view('buku.edit', compact('buku', 'kategoris'));
+    }
+
+    /**
+     * Perbarui data buku di basis data.
+     */
+    public function update(Request $request, Buku $buku)
+    {
+        $validated = $request->validate([
+            'isbn'         => 'required|string|max:20|unique:bukus,isbn,' . $buku->id,
+            'judul'        => 'required|string|min:5|max:200',
+            'penulis'      => 'required|string|max:150',
+            'penerbit'     => 'required|string|max:150',
+            'tahun_terbit' => 'required|digits:4|integer|min:1900|max:' . (date('Y') + 1),
+            'kategori_id'  => 'required|exists:kategoris,id',
+            'stok'         => 'required|integer|min:0',
+            'sinopsis'     => 'nullable|string',
+        ]);
+
+        $buku->update($validated);
+
+        return redirect()->route('buku.index')
+            ->with('success', 'Informasi buku berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus data buku dari katalog.
+     */
+    public function destroy(Buku $buku)
+    {
+        // Cegah penghapusan jika buku sedang memiliki status dipinjam
+        $adaPeminjamanAktif = $buku->peminjamans()->where('status', 'dipinjam')->exists();
+
+        if ($adaPeminjamanAktif) {
+            return back()->with('error', 'Buku tidak dapat dihapus karena masih ada eksemplar yang sedang dipinjam.');
+        }
+
+        $buku->delete();
+
+        return redirect()->route('buku.index')
+            ->with('success', 'Buku telah berhasil dihapus dari katalog.');
+    }
 }
