@@ -129,10 +129,8 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="text-center">
-                                <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
-                                    🔄 {{ $buku->peminjamans_count }}x
-                                </span>
+                            <td class="text-center text-muted fw-semibold">
+                                {{ $buku->peminjamans_count }}
                             </td>
                             <td class="text-end pe-4">
                                 <!-- Tombol Aksi Disesuaikan: Detail (Info), Edit (Warning), Hapus (Danger) -->
