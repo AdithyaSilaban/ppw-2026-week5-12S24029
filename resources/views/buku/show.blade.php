@@ -1,6 +1,6 @@
 <x-layout title="Detail Buku - {{ $buku->judul }}">
     <div class="row g-4">
-        <!-- Informasi Detail Buku -->
+        <!-- Informasi Koleksi Buku -->
         <div class="col-md-5">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4">
@@ -20,63 +20,86 @@
                         </span>
                     </div>
 
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Frekuensi Sirkulasi:</span>
+                        <span class="badge bg-secondary-subtle text-secondary border">
+                            🔄 Telah dipinjam sebanyak {{ $buku->peminjamans->count() }} kali
+                        </span>
+                    </div>
+
                     <div class="mb-4">
                         <span class="text-muted small d-block">Sinopsis:</span>
-                        <p class="text-secondary small mt-1">{{ $buku->sinopsis ?? 'Tidak ada sinopsis.' }}</p>
+                        <p class="text-secondary small mt-1">{{ $buku->sinopsis ?? 'Tidak ada sinopsis untuk koleksi ini.' }}</p>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <a href="{{ route('buku.index') }}" class="btn btn-outline-secondary btn-sm">Kembali</a>
+                        <a href="{{ route('buku.index') }}" class="btn btn-outline-secondary btn-sm">Kembali ke Katalog</a>
                         @auth
-                            <a href="{{ route('buku.edit', $buku) }}" class="btn btn-sm btn-outline-primary">Ubah Data</a>
+                            <a href="{{ route('buku.edit', $buku) }}" class="btn btn-sm btn-outline-warning">Edit Data</a>
                         @endauth
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tabel Riwayat Sirkulasi Buku -->
+        <!-- Riwayat Sirkulasi: Proteksi Data Pribadi (Hanya Pustakawan) -->
         <div class="col-md-7">
             <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h5 class="fw-bold mb-0" style="color: #4C1D95;">Riwayat Sirkulasi Buku</h5>
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0" style="color: #4C1D95;">Riwayat Sirkulasi Koleksi</h5>
+                    <span class="badge bg-light text-muted border">Total: {{ $buku->peminjamans->count() }}</span>
                 </div>
                 <div class="card-body p-0 table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-3 py-3">Kode</th>
-                                <th>Peminjam</th>
-                                <th>Tgl Pinjam</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($buku->peminjamans as $pinjam)
+                    @auth
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <td class="ps-3 font-monospace small">{{ $pinjam->kode_pinjam }}</td>
-                                    <td>
-                                        <div class="fw-semibold">{{ $pinjam->nama_peminjam }}</div>
-                                        <small class="text-muted">{{ $pinjam->nim_peminjam }}</small>
-                                    </td>
-                                    <td>{{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d/m/Y') }}</td>
-                                    <td>
-                                        @if($pinjam->status === 'dipinjam')
-                                            <span class="badge bg-warning text-dark">Dipinjam</span>
-                                        @else
-                                            <span class="badge bg-success">Kembali</span>
-                                        @endif
-                                    </td>
+                                    <th class="ps-3 py-3">Kode Pinjam</th>
+                                    <th>Peminjam</th>
+                                    <th>Tgl Pinjam</th>
+                                    <th>Status</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted small">
-                                        Buku ini belum pernah dipinjam.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @forelse($buku->peminjamans as $pinjam)
+                                    <tr>
+                                        <td class="ps-3 font-monospace small">{{ $pinjam->kode_pinjam }}</td>
+                                        <td>
+                                            <div class="fw-semibold">{{ $pinjam->nama_peminjam }}</div>
+                                            <small class="text-muted">{{ $pinjam->nim_peminjam }}</small>
+                                        </td>
+                                        <td>{{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d/m/Y') }}</td>
+                                        <td>
+                                            @if($pinjam->status === 'dipinjam')
+                                                <span class="badge bg-warning text-dark">Dipinjam</span>
+                                            @else
+                                                <span class="badge bg-success">Kembali</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted small">
+                                            Belum ada riwayat transaksi sirkulasi untuk buku ini.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    @else
+                        <!-- Tampilan untuk Pengunjung Publik (Non-Login) -->
+                        <div class="text-center py-5 px-4">
+                            <div class="display-6 mb-2">🔒</div>
+                            <h6 class="fw-bold text-dark">Informasi Sirkulasi Terbatas</h6>
+                            <p class="text-muted small mb-3">
+                                Rincian data peminjam dan identitas mahasiswa diproteksi demi privasi.<br>
+                                Silakan masuk sebagai pustakawan untuk melihat log transaksi lengkap.
+                            </p>
+                            <a href="{{ route('login') }}" class="btn btn-sm btn-outline-primary px-3">
+                                Masuk Pustakawan
+                            </a>
+                        </div>
+                    @endauth
                 </div>
             </div>
         </div>

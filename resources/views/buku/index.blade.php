@@ -1,39 +1,46 @@
 <x-layout title="Katalog Koleksi Buku">
-    <!-- 4 Kartu Statistik Agregasi Basis Data -->
+   <!-- 4 Kartu Statistik Agregasi Basis Data (Spesifikasi Modul 3) -->
     <div class="row g-3 mb-4">
+        <!-- Kartu 1: Total Judul -->
         <div class="col-md-3 col-sm-6">
             <div class="card border-0 shadow-sm rounded-4 h-100 bg-white border-start border-4 border-primary">
                 <div class="card-body">
                     <span class="text-muted small fw-semibold text-uppercase">Total Judul Buku</span>
-                    <h3 class="fw-bold mt-2 mb-0 text-dark">{{ $totalJudul }}</h3>
+                    <h3 class="fw-bold mt-2 mb-0 text-dark">{{ $stats['total_judul'] }}</h3>
                     <small class="text-muted">Koleksi terdaftar</small>
                 </div>
             </div>
         </div>
+
+        <!-- Kartu 2: Total Eksemplar Stok -->
         <div class="col-md-3 col-sm-6">
             <div class="card border-0 shadow-sm rounded-4 h-100 bg-white border-start border-4 border-success">
                 <div class="card-body">
                     <span class="text-muted small fw-semibold text-uppercase">Total Eksemplar</span>
-                    <h3 class="fw-bold mt-2 mb-0 text-success">{{ $totalStok }}</h3>
+                    <h3 class="fw-bold mt-2 mb-0 text-success">{{ $stats['total_stok'] }}</h3>
                     <small class="text-muted">Fisik buku tersedia</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white border-start border-4 border-info">
-                <div class="card-body">
-                    <span class="text-muted small fw-semibold text-uppercase">Rata-Rata Stok</span>
-                    <h3 class="fw-bold mt-2 mb-0 text-info">{{ $rataStok }}</h3>
-                    <small class="text-muted">Eksemplar per judul</small>
-                </div>
-            </div>
-        </div>
+
+        <!-- Kartu 3: Sedang Dipinjam -->
         <div class="col-md-3 col-sm-6">
             <div class="card border-0 shadow-sm rounded-4 h-100 bg-white border-start border-4 border-warning">
                 <div class="card-body">
-                    <span class="text-muted small fw-semibold text-uppercase">Stok Tertinggi</span>
-                    <h3 class="fw-bold mt-2 mb-0 text-warning">{{ $stokTertinggi }}</h3>
-                    <small class="text-muted">Maksimum per judul</small>
+                    <span class="text-muted small fw-semibold text-uppercase">Sedang Dipinjam</span>
+                    <h3 class="fw-bold mt-2 mb-0 text-warning">{{ $stats['sedang_dipinjam'] }}</h3>
+                    <small class="text-muted">Eksemplar di luar</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kartu 4: Telah Dikembalikan -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white border-start border-4 border-info">
+                <div class="card-body">
+                    <span class="text-muted small fw-semibold text-uppercase">Telah Dikembalikan</span>
+                    <h3 class="fw-bold mt-2 mb-0 text-info">{{ $stats['dikembalikan'] }}</h3>
+                    <small class="text-muted">Riwayat sirkulasi selesai</small>
                 </div>
             </div>
         </div>

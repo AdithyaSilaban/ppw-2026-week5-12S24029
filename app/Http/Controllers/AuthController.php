@@ -24,20 +24,21 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            // Wajib: Cegah serangan Session Fixation
             $request->session()->regenerate();
 
-            // Simpan jejak waktu login pada Session server
-            session(['login_timestamp' => now()->format('d M Y, H:i:s') . ' WIB']);
+            // Sesi waktu login kini akurat mengikuti Asia/Jakarta
+            session(['login_timestamp' => now()->translatedFormat('d M Y, H:i:s') . ' WIB']);
 
-            // Wajib: Simpan email pustakawan ke HTTP Cookie (aktif selama 7 hari)
             Cookie::queue('del_last_librarian_email', $request->email, 10080);
 
             return redirect()->intended(route('buku.index'))
                 ->with('success', 'Selamat datang! Sesi pustakawan telah aktif.');
         }
 
-        return back()->withInput()->with('error', 'Kredensial login pustakawan tidak valid.');
+        // Hanya email yang dikembalikan ke form, password TIDAK ikut di-flash
+        return back()
+            ->withInput($request->only('email'))
+            ->with('error', 'Kredensial login pustakawan tidak valid.');
     }
 
     public function logout(Request $request)

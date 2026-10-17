@@ -12,7 +12,9 @@ Route::get('/', fn() => redirect()->route('buku.index'));
 // Rute Autentikasi Tamu
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:5,1')
+        ->name('login.post');
 });
 
 // Logout
@@ -20,9 +22,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
 // Rute Publik (Katalog)
 Route::get('/buku', [BukuController::class, 'index'])->name('buku.index');
-Route::get('/buku/{buku}', [BukuController::class, 'show'])->name('buku.show');
+Route::get('/buku/{buku}', [BukuController::class, 'show'])->name('buku.show')->whereNumber('buku');
 Route::get('/kategori', [KategoriController::class, 'index'])->name('kategori.index');
-Route::get('/kategori/{kategori}', [KategoriController::class, 'show'])->name('kategori.show');
+Route::get('/kategori/{kategori}', [KategoriController::class, 'show'])->name('kategori.show')->whereNumber('kategori');
 
 // Rute Mutasi Data & Sirkulasi (Khusus Pustakawan Login)
 Route::middleware('auth')->group(function () {
