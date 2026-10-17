@@ -1,70 +1,82 @@
-<x-layout>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold mb-1">Detail Buku</h2>
-            <p class="text-muted mb-0">Informasi lengkap katalog koleksi perpustakaan</p>
-        </div>
-        <div>
-            <a href="{{ route('buku.index') }}" class="btn btn-outline-secondary me-2">← Kembali ke Katalog</a>
-            <a href="{{ route('buku.edit', $buku) }}" class="btn btn-warning me-2">Edit Data</a>
-            <form action="{{ route('buku.destroy', $buku) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus buku ini?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger">Hapus</button>
-            </form>
-        </div>
-    </div>
+<x-layout title="Detail Buku - {{ $buku->judul }}">
+    <div class="row g-4">
+        <!-- Informasi Detail Buku -->
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <span class="badge bg-light text-dark border mb-2">{{ $buku->kategori->nama_kategori ?? '-' }}</span>
+                    <h4 class="fw-bold text-dark mb-1">{{ $buku->judul }}</h4>
+                    <p class="text-muted small font-monospace mb-3">ISBN: {{ $buku->isbn }}</p>
 
-    <div class="row">
-        <!-- Kartu Metadata Utama -->
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white py-3">
-                    <span class="badge bg-secondary mb-2">{{ $buku->isbn }}</span>
-                    <h3 class="fw-bold text-dark mb-0">{{ $buku->judul }}</h3>
-                </div>
-                <div class="card-body">
-                    <h5 class="fw-bold text-muted mb-3">Sinopsis / Deskripsi</h5>
-                    <p class="card-text text-secondary" style="line-height: 1.8;">
-                        {{ $buku->sinopsis ?? 'Tidak ada sinopsis yang tersedia untuk buku ini.' }}
-                    </p>
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Penulis & Penerbit:</span>
+                        <strong>{{ $buku->penulis }}</strong> — {{ $buku->penerbit }} ({{ $buku->tahun_terbit }})
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Sisa Stok Fisik:</span>
+                        <span class="badge {{ $buku->stok > 0 ? 'bg-success' : 'bg-danger' }} fs-6">
+                            {{ $buku->stok }} eksemplar
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <span class="text-muted small d-block">Sinopsis:</span>
+                        <p class="text-secondary small mt-1">{{ $buku->sinopsis ?? 'Tidak ada sinopsis.' }}</p>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('buku.index') }}" class="btn btn-outline-secondary btn-sm">Kembali</a>
+                        @auth
+                            <a href="{{ route('buku.edit', $buku) }}" class="btn btn-sm btn-outline-primary">Ubah Data</a>
+                        @endauth
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Kartu Rincian Spesifikasi -->
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold mb-0">Spesifikasi Buku</h5>
+        <!-- Tabel Riwayat Sirkulasi Buku -->
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0" style="color: #4C1D95;">Riwayat Sirkulasi Buku</h5>
                 </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Kategori</span>
-                            <span class="badge text-white" style="background-color: #4C1D95;">
-                                {{ $buku->kategori->nama_kategori ?? 'Tanpa Kategori' }}
-                            </span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Penulis</span>
-                            <span class="fw-semibold">{{ $buku->penulis }}</span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Penerbit</span>
-                            <span class="fw-semibold">{{ $buku->penerbit }}</span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Tahun Terbit</span>
-                            <span class="fw-semibold">{{ $buku->tahun_terbit }}</span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                            <span class="text-muted">Ketersediaan Stok</span>
-                            <span class="badge {{ $buku->stok > 0 ? 'bg-success' : 'bg-danger' }}">
-                                {{ $buku->stok }} eksemplar
-                            </span>
-                        </li>
-                    </ul>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3 py-3">Kode</th>
+                                <th>Peminjam</th>
+                                <th>Tgl Pinjam</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($buku->peminjamans as $pinjam)
+                                <tr>
+                                    <td class="ps-3 font-monospace small">{{ $pinjam->kode_pinjam }}</td>
+                                    <td>
+                                        <div class="fw-semibold">{{ $pinjam->nama_peminjam }}</div>
+                                        <small class="text-muted">{{ $pinjam->nim_peminjam }}</small>
+                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($pinjam->tanggal_pinjam)->format('d/m/Y') }}</td>
+                                    <td>
+                                        @if($pinjam->status === 'dipinjam')
+                                            <span class="badge bg-warning text-dark">Dipinjam</span>
+                                        @else
+                                            <span class="badge bg-success">Kembali</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted small">
+                                        Buku ini belum pernah dipinjam.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

@@ -123,24 +123,26 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <!-- Badge withCount('peminjamans') -->
                                 <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
                                     🔄 {{ $buku->peminjamans_count }}x
                                 </span>
                             </td>
                             <td class="text-end pe-4">
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ route('buku.show', $buku) }}" class="btn btn-outline-secondary" title="Detail">
-                                        Lihat
+                                <!-- Tombol Aksi Disesuaikan: Detail (Info), Edit (Warning), Hapus (Danger) -->
+                                <div class="d-inline-flex gap-1 justify-content-end">
+                                    <a href="{{ route('buku.show', $buku) }}" class="btn btn-sm btn-outline-info">
+                                        Detail
                                     </a>
                                     @auth
-                                        <a href="{{ route('buku.edit', $buku) }}" class="btn btn-outline-primary" title="Ubah">
-                                            Ubah
+                                        <a href="{{ route('buku.edit', $buku) }}" class="btn btn-sm btn-outline-warning">
+                                            Edit
                                         </a>
-                                        <form action="{{ route('buku.destroy', $buku) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus buku ini?');">
+                                        <form action="{{ route('buku.destroy', $buku) }}" method="POST" class="d-inline m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus buku ini?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-outline-danger">Hapus</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                Hapus
+                                            </button>
                                         </form>
                                     @endauth
                                 </div>
