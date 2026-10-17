@@ -47,7 +47,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('buku.*') ? 'active text-white' : 'text-white-50' }}" href="{{ route('buku.index') }}">
                             Katalog Buku
@@ -58,7 +58,34 @@
                             Kelola Kategori
                         </a>
                     </li>
+                    @if(Route::has('peminjaman.index'))
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('peminjaman.*') ? 'active text-white' : 'text-white-50' }}" href="{{ route('peminjaman.index') }}">
+                                Sirkulasi Peminjaman
+                            </a>
+                        </li>
+                    @endif
                 </ul>
+
+                <!-- Panel Autentikasi Sesi Pustakawan -->
+                <div class="d-flex align-items-center gap-3">
+                    @auth
+                        <span class="badge bg-light text-dark px-3 py-2 shadow-sm border">
+                            👤 {{ Auth::user()->name }} 
+                            <span class="text-muted ms-1" style="font-size: 0.8rem;">({{ session('login_timestamp', 'Online') }})</span>
+                        </span>
+                        <form action="{{ route('logout') }}" method="POST" class="d-inline m-0">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-light btn-sm fw-semibold">
+                                Keluar
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-light btn-sm fw-bold px-3 shadow-sm" style="color: #4C1D95;">
+                            Masuk Pustakawan
+                        </a>
+                    @endauth
+                </div>
             </div>
         </div>
     </nav>
