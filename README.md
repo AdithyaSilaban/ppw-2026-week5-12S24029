@@ -1,5 +1,6 @@
 # SIPUS-Del — Sistem Informasi Perpustakaan Kampus Del
-**Tugas Mandiri Minggu 5 — 12S3101 Pemrograman & Pengujian Web (PPW)**  
+
+**Tugas Mandiri Minggu 5 dan Minggu 6 (Tahap 2) — 12S3101 Pemrograman & Pengujian Web (PPW)**
 Institut Teknologi Del · Semester Ganjil 2026/2027
 
 | Identitas | Keterangan |
@@ -9,257 +10,448 @@ Institut Teknologi Del · Semester Ganjil 2026/2027
 | **Program Studi** | Sarjana Sistem Informasi |
 | **Dosen Pengampu** | Chandro Pardede, S.Kom., M.Sc. |
 | **Repositori** | `ppw-2026-week5-12S24029` |
+| **Branch Minggu 5** | `main` |
+| **Branch Minggu 6 (Tahap 2)** | `week6-db-session` — <https://github.com/AdithyaSilaban/ppw-2026-week5-12S24029/tree/week6-db-session> |
+
+> Branch `week6-db-session` memuat seluruh pekerjaan Minggu 5 ditambah Tahap 2 (Minggu 6). README ini menjelaskan keduanya.
+
+## Akun Uji Pustakawan
+
+| Email | Kata sandi | Hak akses |
+| :--- | :--- | :--- |
+| `pustakawan@del.ac.id` | `password123` | Tambah/ubah/hapus buku dan kategori, peminjaman, pengembalian |
+
+Pengunjung tanpa login hanya dapat melihat katalog buku, detail buku, dan kategori.
 
 ---
 
-### 1. Deskripsi Singkat
-SIPUS-Del adalah aplikasi web pengelolaan master data Kategori dan Katalog Buku perpustakaan kampus yang dibangun menggunakan Laravel 11.x dengan arsitektur Model-View-Controller (MVC) dan *server-side rendering* Blade. 
+## 1. Deskripsi Singkat
 
-Aplikasi ini mendemonstrasikan:
-* Arsitektur MVC dengan pemisahan tanggung jawab (*Separation of Concerns*).
-* Skema basis data berversi (*Migrations*), *Factory*, dan *Seeder* dengan dataset realistis.
-* Eloquent ORM: relasi One-to-Many, proteksi `$fillable`, dan pencegahan *N+1 Query Problem* via *Eager Loading*.
-* Standar *Routing* RESTful (7 aksi *Resource Controller*) dengan *Implicit Route Model Binding*.
-* Validasi formulir di sisi server (*server-side*), proteksi CSRF, sanitasi output (pencegahan XSS), serta integritas referensial.
-* Antarmuka modular menggunakan Blade Component (`<x-layout>`), utilitas tema Bootstrap 5 *Del Purple* (`#4C1D95`), penanganan data kosong via `@forelse`, dan *alert dismissible*.
+SIPUS-Del adalah aplikasi web perpustakaan kampus berbasis **Laravel 11.x** dengan arsitektur **MVC** dan *server-side rendering* (Blade).
 
----
+**Cakupan Minggu 5:** master data Kategori dan Buku, Eloquent ORM (relasi, `$fillable`, eager loading), routing RESTful, validasi server-side, CSRF, dan Blade Component.
 
-### 2. Spesifikasi Teknologi
+**Cakupan Minggu 6 (Tahap 2):**
+
+- Tabel transaksi `peminjamans` dan relasi Eloquent
+- Peminjaman dan pengembalian buku dengan **transaksi ACID** (`DB::transaction` + `lockForUpdate`)
+- Statistik perpustakaan dengan **Fluent Query Builder** (`DB::table`), `withCount`, filter dinamis `when()`, dan paginasi `withQueryString()`
+- **Autentikasi pustakawan** (`Auth::attempt`), **Session**, **Cookie**, dan proteksi rute dengan middleware `auth`
+
+## 2. Teknologi
 
 | Komponen | Versi / Keterangan |
 | :--- | :--- |
-| **Bahasa Pemrograman** | PHP 8.2 / 8.3 |
-| **Framework** | Laravel 11.x |
-| **Basis Data** | SQLite (default), kompatibel dengan MySQL 8.0+ |
-| **Dependency Manager** | Composer 2.6+ |
-| **Frontend Styling** | Bootstrap 5.3.3 via CDN, Custom CSS Del Purple (`#4C1D95`) |
-| **Tooling** | Artisan CLI, Git (Conventional Commits) |
+| Bahasa | PHP 8.4 |
+| Framework | Laravel 13 |
+| Basis data | SQLite (default lokal); kompatibel dengan MySQL 8.0 (InnoDB) |
+| Session driver | `database` (tabel `sessions`) |
+| Dependency manager | Composer 2.6+ |
+| Frontend | Bootstrap 5.3.3 via CDN, tema **Del Purple `#4C1D95`** |
+| Tooling | Artisan CLI, Git (Conventional Commits) |
 
----
+## 3. Fitur
 
-### 3. Fitur Utama
-* **Pengelolaan Kategori:**
-  * Menampilkan daftar kategori lengkap dengan perhitungan agregat jumlah buku (*real-time* via `withCount`).
-  * Tambah kategori baru dengan kode unik.
-  * Halaman rincian koleksi per kategori (`show`).
-  * Ubah nama dan kode kategori (dengan pengecualian validasi *unique* pada ID bersangkutan).
-  * Hapus kategori dengan proteksi integritas: kategori yang masih memuat buku dilarang dihapus.
-* **Pengelolaan Katalog Buku:**
-  * Menampilkan katalog buku dengan relasi nama kategori dan status stok.
-  * Tambah buku baru lengkap dengan nomor ISBN, penulis, penerbit, tahun, stok, dan sinopsis.
-  * Halaman rincian spesifikasi buku (`show`).
-  * Ubah data buku (dengan pengecualian validasi *unique* pada ISBN yang sama).
-  * Hapus data buku dari katalog.
-* **Keamanan & UX:**
-  * Penanganan *flash message* terpusat pada layout master.
-  * Paginasi 10 data per halaman dengan tampilan responsif (`table-responsive`).
-  * Penanganan kondisi data kosong melalui direktif Blade `@forelse ... @empty`.
+**Katalog dan master data**
 
----
+- Katalog buku dengan pencarian (judul/penulis/ISBN), filter kategori, paginasi, jumlah peminjaman per buku, dan 4 kartu statistik
+- Detail buku; riwayat sirkulasi (data peminjam) hanya tampil untuk pustakawan yang login
+- CRUD buku dan kategori; kategori yang masih memuat buku tidak dapat dihapus, begitu pula buku yang masih dipinjam
 
-### 4. Skema Basis Data
+**Sirkulasi (khusus pustakawan)**
 
-#### Tabel `kategoris`
-| Kolom | Tipe Data | Keterangan |
-| :--- | :--- | :--- |
-| `id` | Big Integer (PK) | Auto increment |
-| `kode_kategori` | String(20) | Unique |
-| `nama_kategori` | String(100) | Not null |
-| `created_at`, `updated_at` | Timestamp | Pencatatan waktu |
+- Pencatatan peminjaman dengan penolakan otomatis jika stok habis atau NIM yang sama masih meminjam buku yang sama
+- Pengembalian buku yang memulihkan stok dan mencegah pengembalian ganda
+- Daftar transaksi dengan penanda jatuh tempo
 
-#### Tabel `bukus`
-| Kolom | Tipe Data | Keterangan |
-| :--- | :--- | :--- |
-| `id` | Big Integer (PK) | Auto increment |
-| `isbn` | String(20) | Unique |
-| `judul` | String(200) | Minimal 5 karakter |
-| `penulis` | String(150) | Not null |
-| `penerbit` | String(150) | Not null |
-| `tahun_terbit` | Integer | Tahun valid (1900 s.d. tahun berjalan) |
-| `kategori_id` | Big Integer (FK) | Relasi ke `kategoris.id` (`cascadeOnDelete`) |
-| `stok` | Integer | Default 0, minimal 0 |
-| `sinopsis` | Text | Nullable |
-| `created_at`, `updated_at` | Timestamp | Pencatatan waktu |
+**Autentikasi**
 
-**Relasi Eloquent:**
-* `Kategori` $\rightarrow$ `hasMany(Buku::class)`
-* `Buku` $\rightarrow$ `belongsTo(Kategori::class)`
+- Login dan logout aman, session state (waktu login tampil di navbar), dan cookie email pustakawan terakhir
 
-**Mekanisme Integritas Hapus Kategori:**
-1. **Lapisan Aplikasi:** `KategoriController@destroy` memeriksa keberadaan buku terkait (`$kategori->bukus()->exists()`). Jika masih ada, proses dibatalkan dan sistem mengembalikan pesan galat.
-2. **Lapisan Basis Data:** *Foreign key* didefinisikan dengan aturan `cascadeOnDelete()` sebagai proteksi struktural cadangan.
+## 4. Skema Basis Data dan ERD
 
----
+```mermaid
+erDiagram
+    KATEGORIS ||--o{ BUKUS : "memiliki"
+    BUKUS ||--o{ PEMINJAMANS : "dipinjam melalui"
 
-### 5. Struktur MVC
-
-| Lapisan | Lokasi Berkas | Tanggung Jawab |
-| :--- | :--- | :--- |
-| **Model** | `app/Models/Kategori.php`<br>`app/Models/Buku.php` | Definisi relasi Eloquent, mass-assignment (`$fillable`). |
-| **View** | `resources/views/buku/*.blade.php`<br>`resources/views/kategori/*.blade.php` | Presentasi data, navigasi antarhalaman, dan formulir input. |
-| **Controller** | `app/Http/Controllers/BukuController.php`<br>`app/Http/Controllers/KategoriController.php` | Menangani HTTP request, validasi input, koordinasi Model, dan *redirect* dengan pesan sesi. |
-| **Layout** | `resources/views/components/layout.blade.php` | Kerangka dasar HTML, CDN Bootstrap, kelas utilitas Del, dan penanganan notifikasi global. |
-
----
-
-### 6. Arsitektur RESTful Routing
-
-Rute didaftarkan secara deklaratif di `routes/web.php`:
-```php
-Route::get('/', fn() => redirect()->route('buku.index'));
-Route::resource('buku', BukuController::class);
-Route::resource('kategori', KategoriController::class);
+    KATEGORIS {
+        bigint id PK
+        string kode_kategori UK
+        string nama_kategori
+    }
+    BUKUS {
+        bigint id PK
+        string isbn UK
+        string judul
+        string penulis
+        string penerbit
+        int tahun_terbit
+        bigint kategori_id FK
+        int stok
+        text sinopsis
+    }
+    PEMINJAMANS {
+        bigint id PK
+        string kode_pinjam UK
+        bigint buku_id FK
+        string nim_peminjam
+        string nama_peminjam
+        date tanggal_pinjam
+        date tanggal_jatuh_tempo
+        date tanggal_kembali
+        enum status
+    }
+    USERS {
+        bigint id PK
+        string name
+        string email UK
+        string password
+    }
 ```
 
-#### Pemetaan Rute Sumber Daya (*Resource Table*):
+Tabel `users` dan `sessions` berasal dari migrasi bawaan Laravel (autentikasi dan session database).
 
-| Method HTTP | URI | Aksi Controller | Nama Rute | Deskripsi Fungsi |
-| :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/buku` | `index` | `buku.index` | Katalog koleksi buku (paginasi) |
-| `GET` | `/buku/create` | `create` | `buku.create` | Formulir tambah buku |
-| `POST` | `/buku` | `store` | `buku.store` | Menyimpan data buku baru |
-| `GET` | `/buku/{buku}` | `show` | `buku.show` | Halaman rincian buku |
-| `GET` | `/buku/{buku}/edit` | `edit` | `buku.edit` | Formulir ubah data buku |
-| `PUT/PATCH` | `/buku/{buku}` | `update` | `buku.update` | Memperbarui data buku |
-| `DELETE` | `/buku/{buku}` | `destroy` | `buku.destroy` | Menghapus buku dari katalog |
+### Tabel `kategoris`
 
-*(Pola metode dan URI yang sama berlaku penuh untuk modul `kategori`).* Seluruh parameter rute menggunakan *Implicit Route Model Binding*.
+| Kolom | Tipe | Keterangan |
+| :--- | :--- | :--- |
+| `id` | bigint, PK | |
+| `kode_kategori` | string(20) | unique |
+| `nama_kategori` | string(100) | |
 
-> **Catatan Struktur:** Modul `Mahasiswa` dari sesi praktikum terbimbing sebelumnya tetap dipertahankan berkas model dan migrasinya demi menjaga keutuhan riwayat lab, namun antarmuka navigasi utama telah dikhususkan sepenuhnya untuk alur SIPUS-Del.
+### Tabel `bukus`
 
----
+| Kolom | Tipe | Keterangan |
+| :--- | :--- | :--- |
+| `id` | bigint, PK | |
+| `isbn` | string(20) | unique |
+| `judul` | string(200) | |
+| `penulis`, `penerbit` | string(150) | |
+| `tahun_terbit` | integer | |
+| `kategori_id` | FK → `kategoris.id` | `cascadeOnDelete` |
+| `stok` | integer | default 0 |
+| `sinopsis` | text | nullable |
 
-### 7. Validasi & Keamanan
+### Tabel `peminjamans` (Minggu 6)
 
-* **Validasi Buku:**
-  * `isbn`: Wajib, unik pada tabel `bukus` (mengecualikan ID buku aktif saat update via `Rule::unique`).
-  * `judul`: Wajib, minimal 5 karakter, maksimal 200 karakter.
-  * `penulis`, `penerbit`: Wajib, maksimal 150 karakter.
-  * `tahun_terbit`: Wajib, bilangan bulat, antara 1900 hingga tahun berjalan.
-  * `kategori_id`: Wajib, harus valid terdaftar pada tabel `kategoris`.
-  * `stok`: Wajib, bilangan bulat, nilai minimal 0.
-  * `sinopsis`: Opsional (nullable), string.
-* **Validasi Kategori:**
-  * `kode_kategori`: Wajib, unik pada tabel `kategoris` (mengecualikan ID kategori aktif saat update).
-  * `nama_kategori`: Wajib, string, maksimal 100 karakter.
-* **Standar Keamanan:**
-  * **Proteksi CSRF:** Seluruh formulir menyertakan token `@csrf` dan *method spoofing* (`@method('PUT')`, `@method('DELETE')`).
-  * **Pencegahan Mass-Assignment:** Seluruh atribut model dipagari via properti `$fillable`.
-  * **Pencegahan XSS:** Seluruh ekspresi dinamis di Blade di-escape menggunakan sintaks kurung kurawal ganda `{{ }}`.
-  * **Pencegahan SQL Injection:** Seluruh manipulasi kueri mengandalkan *Parameter Binding* Eloquent ORM.
+| Kolom | Tipe | Keterangan |
+| :--- | :--- | :--- |
+| `id` | bigint, PK | |
+| `kode_pinjam` | string(30) | unique, format `PJ-YYYYMMDD-XXXXX` |
+| `buku_id` | FK → `bukus.id` | `cascadeOnDelete` |
+| `nim_peminjam` | string(15) | |
+| `nama_peminjam` | string(150) | |
+| `tanggal_pinjam` | date | |
+| `tanggal_jatuh_tempo` | date | |
+| `tanggal_kembali` | date | nullable, terisi saat pengembalian |
+| `status` | enum | `dipinjam` (default) / `dikembalikan` |
 
----
+**Relasi Eloquent:** `Kategori` hasMany `Buku`; `Buku` belongsTo `Kategori`; `Buku` hasMany `Peminjaman`; `Peminjaman` belongsTo `Buku`.
 
-### 8. Instalasi & Pengujian Lokal
+**Integritas hapus:**
+
+1. Lapisan aplikasi: `KategoriController@destroy` menolak jika masih ada buku; `BukuController@destroy` menolak jika ada peminjaman berstatus `dipinjam`.
+2. Lapisan basis data: foreign key memakai `cascadeOnDelete` sebagai jaring pengaman. Menghapus buku yang tidak sedang dipinjam ikut menghapus riwayat peminjamannya.
+
+## 5. Struktur MVC dan Routing
+
+| Lapisan | Lokasi |
+| :--- | :--- |
+| Model | `app/Models/Kategori.php`, `Buku.php`, `Peminjaman.php` |
+| View | `resources/views/{buku,kategori,peminjaman,auth}/` |
+| Controller | `BukuController`, `KategoriController`, `PeminjamanController`, `AuthController` |
+| Layout | `resources/views/components/layout.blade.php` (`<x-layout>`) |
+
+### Peta rute dan hak akses
+
+| Method | URI | Aksi | Akses |
+| :--- | :--- | :--- | :--- |
+| GET | `/buku`, `/buku/{buku}` | `index`, `show` | Publik |
+| GET | `/kategori`, `/kategori/{kategori}` | `index`, `show` | Publik |
+| GET/POST | `/login` | `showLoginForm`, `login` | Tamu (`guest`) |
+| POST | `/logout` | `logout` | `auth` |
+| GET, POST | `/buku/create`, `/buku` | `create`, `store` | `auth` |
+| GET, PUT/PATCH, DELETE | `/buku/{buku}/edit`, `/buku/{buku}` | `edit`, `update`, `destroy` | `auth` |
+| (pola yang sama) | `/kategori...` | CRUD kategori | `auth` |
+| GET | `/peminjaman` | `index` | `auth` |
+| GET, POST | `/peminjaman/create`, `/peminjaman` | `create`, `store` | `auth` |
+| PATCH | `/peminjaman/{peminjaman}/kembalikan` | `kembalikan` | `auth` |
+
+Semua parameter rute memakai **Implicit Route Model Binding**. Rute `show` dibatasi `whereNumber(...)` agar `/buku/create` dan `/kategori/create` tidak tertangkap sebagai `{buku}`/`{kategori}`.
+
+## 6. Transaksi ACID dan Concurrency Locking
+
+### Peminjaman (`PeminjamanController@store`)
+
+Seluruh langkah berjalan di dalam `DB::transaction()`:
+
+1. Validasi input, lalu NIM dinormalisasi (`trim` + huruf besar).
+2. `Buku::where('id', ...)->lockForUpdate()->firstOrFail()` mengunci baris buku.
+3. Jika `stok <= 0`: transaksi dibatalkan (rollback) dengan pesan galat.
+4. Jika NIM yang sama masih meminjam buku yang sama (`status = 'dipinjam'`): transaksi dibatalkan.
+5. Insert ke `peminjamans`, lalu `$buku->decrement('stok')`.
+
+### Pengembalian (`PeminjamanController@kembalikan`)
+
+1. Kunci baris `peminjaman`; jika sudah `dikembalikan`, tolak (mencegah stok bertambah dua kali).
+2. Kunci baris `buku` terkait.
+3. Ubah `status` menjadi `dikembalikan`, isi `tanggal_kembali`, lalu `$buku->increment('stok')`.
+
+### Penanganan galat
+
+- Kegagalan aturan bisnis (stok habis, pinjam ganda, sudah dikembalikan) dilempar sebagai `RuntimeException` dan ditampilkan sebagai flash `error`.
+- `QueryException` ditangkap dan dicatat dengan `Log::error('[DB EXCEPTION] ...')`; pengguna hanya menerima pesan umum, bukan detail SQL.
+
+> **Catatan SQLite:** `lockForUpdate()` tidak menghasilkan row-level lock pada SQLite (tidak didukung; penulisan diserialisasi pada level basis data). Penguncian baris yang sesungguhnya efektif pada **MySQL/InnoDB**. Logika aplikasi (periksa stok setelah lock, di dalam transaksi) sama untuk kedua mesin.
+
+## 7. Query Builder, `withCount`, dan Filter Dinamis
+
+**Kartu statistik** (`BukuController@index`, memakai `DB::table`):
+
+```php
+$stats = [
+    'total_judul'     => DB::table('bukus')->count(),
+    'total_stok'      => (int) DB::table('bukus')->sum('stok'),
+    'sedang_dipinjam' => DB::table('peminjamans')->where('status', 'dipinjam')->count(),
+    'dikembalikan'    => DB::table('peminjamans')->where('status', 'dikembalikan')->count(),
+];
+```
+
+**Katalog:** `Buku::with('kategori')->withCount('peminjamans')`, filter kategori dan pencarian (judul/penulis/ISBN, dikelompokkan dalam closure) dengan `when()`, serta `paginate(10)->withQueryString()` agar filter tetap terbawa antarhalaman.
+
+**Daftar sirkulasi:** `Peminjaman::with('buku')->latest()->paginate(10)`.
+
+## 8. Session, Cookie, dan Autentikasi
+
+| Mekanisme | Implementasi |
+| :--- | :--- |
+| Login | `Auth::attempt()` dengan opsi `remember`; setelah berhasil, pengguna dialihkan ke URL tujuan semula (`redirect()->intended`) |
+| Anti Session Fixation | `$request->session()->regenerate()` saat login |
+| Logout | `POST /logout` + `Auth::logout()`, `session()->invalidate()`, `session()->regenerateToken()` |
+| Session state | `login_timestamp` disimpan di session dan ditampilkan di navbar |
+| HTTP Cookie | `Cookie::queue('del_last_librarian_email', ..., 10080)` (7 hari) untuk mengisi otomatis email di form login |
+| Proteksi rute | Middleware `auth` pada seluruh rute mutasi dan sirkulasi; `guest` pada halaman login |
+| Pembatasan percobaan login | Throttling pada `POST /login` untuk menghambat tebakan kata sandi berulang |
+
+Cookie sesi dan cookie email pustakawan dikirim dengan flag **HttpOnly** dan `SameSite=Lax`; nilainya terenkripsi oleh Laravel. Session disimpan di tabel `sessions` (`SESSION_DRIVER=database`). Bukti inspeksi DevTools ada di bagian 12.7.
+
+## 9. Validasi dan Keamanan
+
+**Buku (`store` dan `update`)**
+
+| Field | Aturan |
+| :--- | :--- |
+| `isbn` | wajib, maks 20, unik (saat `update` mengecualikan ID sendiri) |
+| `judul` | wajib, **minimal 5**, maks 200 |
+| `penulis`, `penerbit` | wajib, maks 150 |
+| `tahun_terbit` | wajib, integer 4 digit, 1900 s.d. tahun berjalan + 1 |
+| `kategori_id` | wajib, ada di tabel `kategoris` |
+| `stok` | wajib, integer, minimal 0 |
+| `sinopsis` | opsional |
+
+**Kategori:** `kode_kategori` wajib, maks 20, unik (kecuali ID sendiri); `nama_kategori` wajib, maks 100.
+
+**Peminjaman:** `buku_id` ada di `bukus`; `nim_peminjam` maks 15; `nama_peminjam` maks 150; `tanggal_pinjam` bertipe date; `tanggal_jatuh_tempo` bertipe date dan tidak lebih awal dari tanggal pinjam.
+
+**Langkah keamanan**
+
+- CSRF: semua form memuat `@csrf`; ubah, hapus, dan pengembalian memakai `@method('PUT' / 'DELETE' / 'PATCH')`; logout berupa form `POST`
+- `$fillable` pada semua model; `create()`/`update()` hanya menerima data hasil validasi
+- Output di-escape dengan `{{ }}` (XSS); akses data melalui Eloquent/Query Builder dengan parameter terikat (SQL Injection)
+- Riwayat sirkulasi (NIM dan nama peminjam) disembunyikan dari pengunjung tanpa login
+- Pembatasan percobaan login (throttling) pada `POST /login`
+- `.env` dan `vendor/` tidak ter-commit; tersedia `.env.example`
+
+## 10. Instalasi dan Menjalankan Aplikasi
 
 ```bash
-# 1. Klon repositori
-git clone [https://github.com/AdithyaSilaban/ppw-2026-week5-12S24029.git](https://github.com/AdithyaSilaban/ppw-2026-week5-12S24029.git)
+# 1. Klon repositori dan pindah ke branch Minggu 6
+git clone https://github.com/AdithyaSilaban/ppw-2026-week5-12S24029.git
 cd ppw-2026-week5-12S24029
+git checkout week6-db-session
 
-# 2. Pasang dependensi PHP
+# 2. Pasang dependensi
 composer install
 
-# 3. Salin berkas lingkungan dan buat Application Key
+# 3. Siapkan environment
 cp .env.example .env
 php artisan key:generate
 
 # 4. Siapkan basis data SQLite
-# Windows (PowerShell):
-New-Item database/database.sqlite -ItemType File -Force
-# Linux/macOS:
+# Windows (PowerShell): New-Item database/database.sqlite -ItemType File -Force
 touch database/database.sqlite
 
-# 5. Jalankan migrasi dan seeding data awal
+# 5. Migrasi dan seeding
 php artisan migrate:fresh --seed
 
-# 6. Jalankan server lokal
+# 6. Jalankan server
 php artisan serve
 ```
-Aplikasi dapat diakses langsung pada peramban melalui alamat `http://127.0.0.1:8000`.
 
----
+Buka <http://127.0.0.1:8000>, lalu masuk dengan akun uji di atas. Untuk MySQL, ubah `DB_CONNECTION=mysql` dan isi `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`. Opsional: `php artisan db:show` untuk memverifikasi koneksi.
 
-### 9. Seeder & Data Uji (*Mock Data*)
+## 11. Seeder dan Data Uji
 
-Pengisian data awal dieksekusi secara otomatis melalui `DatabaseSeeder.php`:
-
-| Kategori Data | Jumlah | Sumber & Karakteristik Data |
+| Data | Jumlah | Keterangan |
 | :--- | :--- | :--- |
-| **Kategori Master** | 5 Kategori | Dibuat via `firstOrCreate`: `KAT-01` s.d. `KAT-05` (Teknologi & Komputer, Sains & Rekayasa, Sastra & Fiksi, Bisnis & Manajemen, Sosial & Humaniora). |
-| **Buku Dummy** | 20 Buku | Digenerate otomatis lewat `BukuFactory` menggunakan **25 judul buku literatur ilmiah berbahasa Indonesia**, nomor ISBN tervalidasi Faker, penerbit nasional, dan terdistribusi acak ke kategori master. |
-| **Buku Referensi** | 1 Buku | *Clean Architecture: A Craftsman's Guide to Software Structure* karya Robert C. Martin (`KAT-01`). |
+| Akun pustakawan | 1 | `pustakawan@del.ac.id` / `password123` |
+| Kategori | 5 | `KAT-01` s.d. `KAT-05` |
+| Buku (Factory) | 20 | `BukuFactory`: 25 judul literatur berbahasa Indonesia, ISBN unik, penerbit nasional, stok 1-20 |
+| Buku uji stok = 0 | 1 | *Algoritma Pemrograman Tingkat Lanjut (Buku Habis)*, untuk menguji penolakan dan rollback |
+| Buku uji stok = 1 | 1 | *Clean Architecture*, untuk menguji stok berubah dari 1 menjadi 0 |
+| Sampel peminjaman | 2 | `PJ-SEED-0001` (`dipinjam`, buku stok 0, Budi Siregar) dan `PJ-SEED-0002` (`dikembalikan`, Clean Architecture, Rani Simanjuntak) |
 
----
+Sampel peminjaman dibuat konsisten dengan stok: buku stok 0 memiliki satu peminjaman aktif. Screenshot di bagian 12 diambil **setelah pengujian**, sehingga `PJ-SEED-0001` sudah berstatus *Telah Kembali*. Menjalankan `php artisan migrate:fresh --seed` mengembalikan data ke kondisi awal.
 
-### 10. Audit Kueri SQL (Eager Loading vs N+1 Problem)
+## 12. Bukti Pengujian (Minggu 6)
 
-Untuk menjamin efisiensi performa basis data, pendengar kueri dipasang pada `app/Providers/AppServiceProvider.php` via `DB::listen` yang mencatat eksekusi SQL ke `storage/logs/laravel.log` dengan label `[SQL AUDIT]`.
+| No | Skenario | Hasil | Status |
+| :-: | :--- | :--- | :-: |
+| 12.1 | Pinjam buku dengan stok tersedia | Transaksi tercatat, stok berkurang | ✅ |
+| 12.2 | Pinjam buku stok = 0 | Ditolak, tidak ada record baru (rollback) | ✅ |
+| 12.3 | Pinjam buku yang sama oleh NIM yang sama sebelum dikembalikan | Ditolak | ✅ |
+| 12.4 | Pengembalian buku | Status berubah, stok dipulihkan | ✅ |
+| 12.5 | Pengembalian ulang transaksi yang sama | Ditolak | ✅ |
+| 12.6 | Akses rute sirkulasi tanpa login | Dialihkan ke `/login` | ✅ |
+| 12.7 | Inspeksi cookie di DevTools | Cookie sesi dan cookie email bertanda HttpOnly | ✅ |
 
-#### Implementasi Kode:
-```php
-// BukuController@index (Mencegah N+1 saat memuat relasi kategori)
-$bukus = Buku::with('kategori')->latest()->paginate(10);
+### 12.1 Peminjaman berhasil
 
-// KategoriController@index (Menghitung agregat buku dalam 1 kueri)
-$kategoris = Kategori::withCount('bukus')->latest()->paginate(10);
-```
+![Peminjaman berhasil](docs/screenshots/pinjam-berhasil.png)
 
-#### Cuplikan Log Eksekusi Halaman `/buku`:
+Buku *Clean Architecture* (stok 1) dipinjam oleh NIM 12S24029. Muncul pesan "Transaksi peminjaman buku berhasil dicatat" dan transaksi `PJ-20261017-RU532` berstatus *Sedang Dipinjam*. Stok buku berkurang menjadi 0.
+
+### 12.2 Penolakan saat stok = 0 (rollback)
+
+![Penolakan stok habis](docs/screenshots/pinjam-stok-habis.png)
+
+Buku yang sama (kini stok 0) tetap dapat dipilih dan berlabel `[HABIS]` agar penolakan dilakukan oleh server. Hasilnya: "Stok buku '...' habis. Peminjaman tidak dapat diproses." Transaksi dibatalkan: pada daftar sirkulasi (lihat 12.4) tidak ada record baru untuk percobaan ini, dan stok tetap 0.
+
+### 12.3 Penolakan pinjam ganda
+
+![Penolakan pinjam ganda](docs/screenshots/pinjam-ganda.png)
+
+NIM 12S24029 yang masih meminjam *Analisis Protokol Jaringan Komputer* mencoba meminjam buku yang sama. Sistem menolak: "Mahasiswa dengan NIM 12S24029 masih meminjam buku ini dan belum mengembalikannya." Pada daftar sirkulasi hanya tercatat satu transaksi untuk buku tersebut.
+
+### 12.4 Pengembalian buku
+
+![Pengembalian buku](docs/screenshots/pengembalian.png)
+
+Transaksi `PJ-20261017-RU532` dikembalikan: pesan "Buku telah berhasil dikembalikan dan stok diperbarui" muncul, status menjadi *Telah Kembali* dengan tanggal kembali terisi, dan tombol aksi berganti menjadi "Selesai". Transaksi lain yang masih dipinjam tidak terpengaruh.
+
+### 12.5 Penolakan pengembalian ganda
+
+![Penolakan pengembalian ganda](docs/screenshots/pengembalian-ganda.png)
+
+Daftar sirkulasi dibuka di dua tab. Transaksi dikembalikan di tab pertama, lalu tombol yang sama (dari halaman lama) diklik di tab kedua. Sistem menolak: "Buku ini telah berstatus dikembalikan sebelumnya." sehingga stok tidak bertambah dua kali. Pengujian ini berurutan (bukan permintaan paralel); lihat catatan SQLite pada bagian 6.
+
+### 12.6 Proteksi rute tanpa login
+
+![Dialihkan ke halaman login](docs/screenshots/akses-tanpa-login.png)
+
+Setelah logout, membuka `/peminjaman` mengarahkan pengguna ke `/login` (navbar menampilkan tombol "Masuk Pustakawan", bukan nama pengguna). Setelah login berhasil, pengguna dikembalikan ke URL tujuan semula, `/peminjaman` (terlihat pada screenshot di 12.7).
+
+### 12.7 Audit cookie di DevTools
+
+![Cookie di DevTools](docs/screenshots/devtools-cookie.png)
+
+DevTools → Application → Cookies → `http://127.0.0.1:8000`:
+
+| Cookie | HttpOnly | SameSite | Keterangan |
+| :--- | :-: | :-: | :--- |
+| `sipus-del-session` | ✓ | Lax | ID session aplikasi (nama berasal dari `APP_NAME`) |
+| `del_last_librarian_email` | ✓ | Lax | Cookie email pustakawan terakhir, nilai terenkripsi |
+| `XSRF-TOKEN` | – | Lax | Token CSRF; sengaja tidak HttpOnly agar dapat dibaca JavaScript |
+
+<!-- GANTI: cookie `laravel-session` pada screenshot adalah sisa sebelum APP_NAME diubah. Jika screenshot diambil ulang setelah menghapus cookie lama, hapus baris catatan di bawah ini. -->
+Cookie `laravel-session` pada screenshot adalah sisa dari sebelum `APP_NAME` diubah dan tidak lagi dipakai aplikasi.
+
+## 13. Audit Kueri SQL
+
+`DB::listen` di `AppServiceProvider::boot()` mencatat setiap kueri ke `storage/logs/laravel.log` dengan awalan `[SQL AUDIT]`.
+
+### Minggu 5: halaman `/buku` (eager loading)
+
 ```text
 [SQL AUDIT] (0.42 ms) select count(*) as "aggregate" from "bukus"
 [SQL AUDIT] (0.55 ms) select * from "bukus" order by "created_at" desc limit 10 offset 0
 [SQL AUDIT] (0.39 ms) select * from "kategoris" where "kategoris"."id" in (1, 2, 4, 5)
 ```
-**Analisis Hasil:**  
-Halaman katalog hanya menjalankan **3 kueri SQL**: 1 kueri agregat untuk paginasi, 1 kueri untuk mengambil 10 buku, dan 1 kueri relasi kategori menggunakan klausul `WHERE IN (...)`. Tanpa *Eager Loading*, sistem akan mengeksekusi $1 + 1 + 10 = 12$ kueri terpisah (*N+1 Query Problem*).
 
----
+Tanpa eager loading, halaman yang sama memerlukan 1 + 1 + 10 = 12 kueri (N+1).
 
-### 11. Struktur Berkas Utama
+### Minggu 6: halaman `/buku` setelah penambahan statistik dan `withCount`
 
-```text
-ppw-2026-week5-12S24029/
-├── app/
-│   ├── Http/Controllers/
-│   │   ├── BukuController.php         # RESTful Controller Katalog Buku
-│   │   └── KategoriController.php     # RESTful 
-Controller Master Kategori
-│   ├── Models/
-│   │   ├── Buku.php                   # Model Buku, relasi belongsTo Kategori
-│   │   └── Kategori.php               # Model Kategori, relasi hasMany Buku
-│   └── Providers/
-│       └── AppServiceProvider.php     # Registrasi DB::listen & Bootstrap Paginator
-├── database/
-│   ├── factories/
-│   │   ├── BukuFactory.php            # Mock data 25 judul buku realistis
-│   │   └── KategoriFactory.php        # Mock data kategori
-│   ├── migrations/                    # Skema tabel berversi
-│   └── seeders/
-│       └── DatabaseSeeder.php         # Inisialisasi master KAT-01..05 & 20+ buku
-├── resources/views/
-│   ├── components/
-│   │   └── layout.blade.php           # Master template Blade (<x-layout>)
-│   ├── buku/
-│   │   ├── index.blade.php            # Tabel katalog buku & tautan detail
-│   │   ├── create.blade.php           # Form penambahan buku
-│   │   ├── edit.blade.php             # Form pembaruan buku
-│   │   └── show.blade.php             # Halaman rincian spesifikasi buku
-│   └── kategori/
-│       ├── index.blade.php            # Tabel master kategori & tautan detail
-│       ├── create.blade.php           # Form penambahan kategori
-│       ├── edit.blade.php             # Form pembaruan kategori
-│       └── show.blade.php             # Halaman rincian koleksi per kategori
-└── routes/
-    └── web.php                        # Definisi rute RESTful Resource
+Cara reproduksi: kosongkan `storage/logs/laravel.log`, buka `/buku`, lalu saring:
+
+```powershell
+Select-String -Path storage/logs/laravel.log -Pattern 'bukus|kategoris|peminjamans'
 ```
 
+<!-- GANTI: tempel log ASLI /buku versi Minggu 6, lalu isi kesimpulan -->
+```text
+[ISI: log asli. Yang diharapkan: 4 kueri statistik DB::table, 1 count paginasi,
+1 kueri bukus dengan subkueri peminjamans_count, 1 kueri kategoris WHERE IN (eager loading),
+1 kueri daftar kategori untuk dropdown filter]
+```
+
+**Kesimpulan:** `[ISI: jumlah kueri dan penjelasan bahwa tidak ada kueri berulang per baris buku. Jika SESSION_DRIVER=database, kueri tabel sessions dapat ikut tercatat dan berasal dari mekanisme session, bukan N+1.]`
+
+## 14. Struktur Berkas Utama
+
+```text
+app/
+├── Http/Controllers/
+│   ├── AuthController.php         # Login, logout, session, cookie
+│   ├── BukuController.php         # CRUD buku, statistik, filter
+│   ├── KategoriController.php     # CRUD kategori
+│   └── PeminjamanController.php   # Peminjaman dan pengembalian (ACID)
+├── Models/
+│   ├── Buku.php
+│   ├── Kategori.php
+│   └── Peminjaman.php
+└── Providers/AppServiceProvider.php   # DB::listen + Paginator Bootstrap 5
+database/
+├── factories/                     # BukuFactory, KategoriFactory
+├── migrations/                    # kategoris, bukus, peminjamans, users, sessions
+└── seeders/DatabaseSeeder.php
+docs/screenshots/                  # Bukti pengujian Minggu 6
+resources/views/
+├── components/layout.blade.php    # <x-layout>
+├── auth/login.blade.php
+├── buku/                          # index, create, edit, show
+├── kategori/                      # index, create, edit, show
+└── peminjaman/                    # index, create
+routes/web.php
+.env.example
+```
+
+## 15. Riwayat Commit
+
+```text
+420aa41 docs(screenshots): add circulation, rollback, and cookie audit evidence
+dd1f504 fix(security): restrict loan history visibility, add login throttling, and correct timezone
+a032322 docs: complete week 6 library circulation and acid transaction documentation
+ab3ac38 feat(analytics): implement library analytics cards and withCount loans on book catalog
+6671f49 feat(circulation): implement ACID book borrowing and returning with lockForUpdate
+9c1a34a feat(auth-session): implement librarian login, session regeneration, and cookies
+7f14cea feat(migration): create peminjaman table dengan FK to bukus
+612c0e8 HAPUS SIM DEL
+c795b6e NEW UPDATE
+6f5134f refactor(views): resolve duplicate alerts and connect show routes
+63db172 perf(eager-loading): finalize validation rules and audit log documentation
+db6d6ad feat: complete sipus-del MVC, eager loading, and seeder implementation
+```
+
+<!-- GANTI: jalankan ulang `git log --oneline` setelah commit terakhir dan tempel hasilnya di sini -->
+
+## 16. Catatan
+
+- `.env` dan `vendor/` tidak dilacak Git (`.gitignore`); kredensial pada README dan halaman login hanya akun uji untuk keperluan penilaian.
+- Pengujian sirkulasi dilakukan secara berurutan pada SQLite. Pembuktian konkurensi paralel yang sesungguhnya memerlukan MySQL/InnoDB, karena SQLite tidak mendukung row-level lock.
+- Modul Mahasiswa dari praktikum terbimbing telah dihapus dari repositori (commit `HAPUS SIM DEL`); seluruh alur kini difokuskan pada SIPUS-Del.
+
 ---
 
-### 12. Catatan Penutup & Integritas Repositori
-* Berkas `.env` dan direktori dependensi `vendor/` diabaikan secara ketat dari pelacakan Git melalui konfigurasi `.gitignore`.
-* Format pesan commit menerapkan standar *Conventional Commits* (`feat`, `fix`, `refactor`, `style`, `docs`) untuk menjaga keterbacaan riwayat repositori secara profesional.
-
----
 © 2026 — **Adithya Philip Jona Putra Silaban** (12S24029) · Sarjana Sistem Informasi · Institut Teknologi Del
