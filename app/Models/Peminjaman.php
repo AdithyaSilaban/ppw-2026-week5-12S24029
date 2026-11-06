@@ -10,21 +10,17 @@ class Peminjaman extends Model
 {
     use HasFactory;
 
+    // Kunci nama tabel ke 'peminjamans' agar Laravel tidak mencari 'peminjamen'
     protected $table = 'peminjamans';
 
-    protected $fillable = [
-        'kode_pinjam',
-        'buku_id',
-        'nim_peminjam',
-        'nama_peminjam',
-        'tanggal_pinjam',
-        'tanggal_jatuh_tempo',
-        'tanggal_kembali',
-        'status',
-    ];
+    // Izinkan seluruh kolom disimpan tanpa terblokir mass-assignment
+    protected $guarded = [];
 
+    /**
+     * Relasi ke model Buku
+     */
     public function buku(): BelongsTo
     {
-        return $this->belongsTo(Buku::class);
+        return $this->belongsTo(Buku::class, 'buku_id');
     }
 }

@@ -20,7 +20,6 @@ class PeminjamanResource extends JsonResource
             ],
         ];
 
-        // HATEOAS Dinamis: Link kembalikan_buku HANYA muncul jika buku sedang dipinjam
         if ($this->status === 'dipinjam') {
             $links['kembalikan_buku'] = [
                 'href'   => url("/api/v1/peminjamans/{$this->id}/kembalikan"),
@@ -29,15 +28,17 @@ class PeminjamanResource extends JsonResource
         }
 
         return [
-            'id'              => $this->id,
-            'buku_id'         => (int) $this->buku_id,
-            'buku_judul'      => $this->whenLoaded('buku', fn () => $this->buku->judul),
-            'nim_peminjam'    => $this->nim_peminjam,
-            'nama_peminjam'   => $this->nama_peminjam,
-            'tanggal_pinjam'  => $this->tanggal_pinjam ?? $this->created_at?->toDateString(),
-            'tanggal_kembali' => $this->tanggal_kembali,
-            'status'          => $this->status,
-            '_links'          => $links,
+            'id'                  => $this->id,
+            'kode_pinjam'         => $this->kode_pinjam,
+            'buku_id'             => (int) $this->buku_id,
+            'buku_judul'          => $this->whenLoaded('buku', fn () => $this->buku->judul),
+            'nim_peminjam'        => $this->nim_peminjam,
+            'nama_peminjam'       => $this->nama_peminjam,
+            'tanggal_pinjam'      => $this->tanggal_pinjam ?? $this->created_at?->toDateString(),
+            'tanggal_jatuh_tempo' => $this->tanggal_jatuh_tempo,
+            'tanggal_kembali'     => $this->tanggal_kembali,
+            'status'              => $this->status,
+            '_links'              => $links,
         ];
     }
 }
