@@ -7,10 +7,12 @@ use App\Http\Controllers\Api\V1\PeminjamanApiController;
 
 Route::prefix('v1')->group(function () {
     // 1. ENDPOINT PUBLIK
+// 1. ENDPOINT PUBLIK
     Route::post('/auth/login', [AuthTokenController::class, 'login']);
     Route::get('/bukus', [BukuApiController::class, 'index']);
     Route::get('/bukus/{id}', [BukuApiController::class, 'show']);
-
+    Route::get('/bukus/{id}/referensi-eksternal', [BukuApiController::class, 'referensiEksternal']); 
+    
     // 2. ENDPOINT TERPROTEKSI STATELESS BEARER TOKEN (auth:sanctum)
     Route::middleware('auth:sanctum')->group(function () {
         // Otentikasi
